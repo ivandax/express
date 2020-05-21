@@ -12,6 +12,37 @@ var promoRouter = require('./routes/promoRouter');
 
 var app = express();
 
+const MongoClient = require('mongodb').MongoClient;
+const assert = require('assert');
+
+const url = 'mongodb://localhost:27017';
+const dbName = 'conFusion';
+
+MongoClient.connect(url, (err, client) => {
+
+  assert.equal(err, null); //checks if there is an error and informs, it's like an if.
+
+  console.log("Connected to Mongo server");
+
+  const db = client.db(dbName);;
+  const collection = db.collection('dishes');
+
+  collection.insertOne({"name":"Chocolate Cake Shake", "description":"Wonderful Cake"}, (err, result) => {
+    assert.equal(err, null);
+    console.log("After insert...:\n");
+    console.log(result.ops); //see result ops
+    collection.find({}).toArray((err, docs)=>{
+      assert.equal(err, null);
+      console.log("all docs are the following:\n")
+      console.log(docs);
+      db.dropCollection('dishes', (err, result)=>{
+        assert.equal(err, null);
+        client.close()
+      })
+    })
+  });
+})
+
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
