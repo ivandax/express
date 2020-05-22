@@ -10,6 +10,11 @@ var dishRouter = require('./routes/dishRouter');
 var leaderRouter = require('./routes/leaderRouter');
 var promoRouter = require('./routes/promoRouter');
 
+const mongoose = require('mongoose');
+const Dishes = require('./models/dishes');
+
+const dbOps = require('./operations');
+
 var app = express();
 
 const MongoClient = require('mongodb').MongoClient;
@@ -18,38 +23,68 @@ const assert = require('assert');
 const url = 'mongodb://localhost:27017';
 const dbName = 'conFusion';
 
-const dbOps = require('./operations');
+//connection using mongoose...
 
-MongoClient.connect(url, (err, client) => {
+const connect = mongoose.connect(url+'/'+dbName);
 
-  assert.equal(err, null); //checks if there is an error and informs, it's like an if.
+connect.then((db)=>{
+  console.log("Connected to db using mongoose");
 
-  console.log("Connected to Mongo server");
-
-  const db = client.db(dbName);
-
-  dbOps.insertDocument(db, {name: "Doughnut", description: "Dessert"}, 'dishes', (result)=>{
-    console.log("On app.js, insert document:\n", result.ops);
-
-    dbOps.findDocuments(db, 'dishes', (docs)=>{
-      console.log("On app.js, find docs:\n", docs)
-
-      dbOps.updateDocument(db, {name:"Doughnut"}, {description: "new desc"}, 'dishes', (result)=>{
-        console.log("On app.js, updated document", result.result);
-
-        dbOps.findDocuments(db, 'dishes', (docs)=>{
-          console.log("On app.js, secdon  found docs:\n", docs);
-
-          db.dropCollection('dishes', (result)=>{
-            console.log("Dropped collection", result);
-
-            client.close();
-          });
-        });
-      });
-    });
+  var newDish = Dishes({
+    name: "Chocoblast",
+    description: "Trial desc"
   });
-});
+
+  newDish.save()
+  .then((dish)=>{
+    console.log("added the "+dish);
+
+    return Dishes.find({}).exec();
+  })
+  .then((dishes)=>{
+    console.log("Retrieved the dishes - ",dishes)
+
+    return Dishes.remove({});
+  })
+  .then(()=>{
+    return mongoose.connection.close();
+  })
+  .catch((err)=>{
+    console.log(err);
+  })
+})
+
+//Connection using just MongoDB module... 
+
+// MongoClient.connect(url).then((client) => {
+//   //assert.equal(err, null); //checks if there is an error and informs, it's like an if.
+//   console.log("Connected to Mongo server");
+
+//   const db = client.db(dbName);
+
+//   dbOps.insertDocument(db, {name: "Doughnut", description: "Dessert"}, 'dishes')
+//   .then((result)=>{
+//     console.log("On app.js, insert document:\n", result.ops);
+//     return dbOps.findDocuments(db, 'dishes');
+//   })
+//   .then((docs)=>{
+//     console.log("On app.js, find docs:\n", docs);
+//     return dbOps.updateDocument(db, {name:"Doughnut"}, {description: "new desc"}, 'dishes')
+//   })
+//   .then((result)=>{
+//     console.log("On app.js, updated document", result.result);
+//     return dbOps.findDocuments(db, 'dishes');
+//   })
+//   .then((docs)=>{
+//     console.log("On app.js, secdon  found docs:\n", docs);
+//     return db.dropCollection('dishes')
+//   })
+//   .then((result)=>{
+//     console.log("Dropped collection", result);
+//     client.close();
+//   }).catch((err)=>{console.log(err)});
+// })
+// .catch((err)=>{console.log(err)});
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
