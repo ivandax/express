@@ -30,20 +30,33 @@ const connect = mongoose.connect(url+'/'+dbName);
 connect.then((db)=>{
   console.log("Connected to db using mongoose");
 
-  var newDish = Dishes({
+  Dishes.create({
     name: "Chocoblast",
     description: "Trial desc"
-  });
-
-  newDish.save()
+  })
   .then((dish)=>{
     console.log("added the "+dish);
 
-    return Dishes.find({}).exec();
+    return Dishes.findByIdAndUpdate(dish._id, {
+      $set : {
+        description : "updated desc"
+      }
+    }, {
+      new : true
+    }).exec();
   })
-  .then((dishes)=>{
-    console.log("Retrieved the dishes - ",dishes)
+  .then((dish)=>{
+    console.log("Retrieved the modified dish - ",dish);
+    dish.comments.push({
+      rating: 5,
+      comment: "Delicious!",
+      author: "Jimmy John"
+    });
 
+    return dish.save();
+  })
+  .then((dish)=>{
+    console.log("now the dish with comments - ", dish);
     return Dishes.remove({});
   })
   .then(()=>{
