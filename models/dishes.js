@@ -51,6 +51,16 @@ var trial2 = {
     ]
 }
 
+var trial3 = {
+    label: "hott"
+}
+
+var simpleComment = {
+    "rating" : 5,
+    "comment" : "Delicious",
+    "author" : "John Wick"
+}
+
 const dishSchema = new Schema({
     name:{
         type: String,
