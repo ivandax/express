@@ -1,5 +1,8 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const mongoose = require('mongoose');
+
+const Dishes = require('../models/dishes');
 
 const dishRouter = express.Router();
 
@@ -7,41 +10,81 @@ dishRouter.use(bodyParser.json());
 
 //all specifies something we want the app to do to all different methods, regardless of methods
 dishRouter.route('/').
-all((req,res,next)=>{
-    res.statusCode = 200;
-    res.setHeader('Content-Type','text/plain');
-    next(); //next allows us to move along to other posible requests
-}).
+// all((req,res,next)=>{
+//     res.statusCode = 200;
+//     res.setHeader('Content-Type','text/plain');
+//     next(); //next allows us to move along to other posible requests
+// }).
 get( (req, res, next)=>{ //getting or reading from database
-    res.end("We are sending dishes, all of them!");
+    Dishes.find({})
+    .then((dishes) => {
+        res.statusCode = 200;
+        res.setHeader('Content-Type','text/plain');
+        res.json(dishes);
+    }, (err)=>{next(err)})
+    .catch((err)=>{next(err)});
 }).
 post((req,res,next)=>{ //posting new item to collection
-    res.end(`Will add the dish ${req.body.name}`)
+    Dishes.create(req.body)
+    .then((dish)=>{
+        console.log("Post of Dish ",dish);
+        res.statusCode = 200;
+        res.setHeader('Content-Type','text/plain');
+        res.json(dish);
+    }, (err)=>{next(err)})
+    .catch((err)=>{next(err)});
 }).
 put((req,res,next)=>{
     res.statusCode = 403; //no updating on a whole collection, not supported
     res.end("Put operation not supported")
 }).
 delete((req,res,next)=>{ //dangerous op
-    res.end("Deleting all dishes!")
+    Dishes.remove({})
+    .then((res)=>{
+        res.statusCode = 200;
+        res.setHeader('Content-Type','text/plain');
+        res.json(res); 
+    }, (err)=>{next(err)})
+    .catch((err)=>{next(err)});
 });
 
 //NOW; FOR SINGLE DISH REQUESTS:
 
 dishRouter.route('/:dishId').
 get((req, res, next)=>{
-    res.end("We are sending dish: "+req.params.dishId);
+    Dishes.findById(req.params.dishId)
+    .then((dishes) => {
+        res.statusCode = 200;
+        res.setHeader('Content-Type','text/plain');
+        res.json(dishes);
+    }, (err)=>{next(err)})
+    .catch((err)=>{next(err)});
 }).
 post((req,res,next)=>{
     res.statusCode = 403;
     res.end("Post operation on single item not supported - "+req.params.dishId)
 }).
 put((req,res,next)=>{
-    res.write("Updating dish "+req.params.dishId)
-    res.end("Will update the dish - "+req.body.name+" with details: "+req.body.description) //we can read the body as json since we are using bodyParser
+    Dishes.findByIdAndUpdate(req.params.dishId, {
+        $set: req.body
+    }, {new: true})
+    .then((dish)=>{
+        console.log("Post of Dish ",dish);
+        res.statusCode = 200;
+        res.setHeader('Content-Type','text/plain');
+        res.json(dish);
+    }, (err)=>{next(err)})
+    .catch((err)=>{next(err)});
 }).
 delete((req,res,next)=>{
-    res.end("Deleting single dish - "+req.params.dishId);
+    Dishes.findByIdAndRemove(req.params.dishId)
+    .then((dish)=>{
+        console.log("Post of Dish ",dish);
+        res.statusCode = 200;
+        res.setHeader('Content-Type','text/plain');
+        res.json(dish);
+    }, (err)=>{next(err)})
+    .catch((err)=>{next(err)});
 })
 
 module.exports = dishRouter;

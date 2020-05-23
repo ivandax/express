@@ -13,11 +13,11 @@ var promoRouter = require('./routes/promoRouter');
 const mongoose = require('mongoose');
 const Dishes = require('./models/dishes');
 
-const dbOps = require('./operations');
+//const dbOps = require('./operations'); only useful when using mongoDB module without mongoose.
 
 var app = express();
 
-const MongoClient = require('mongodb').MongoClient;
+//const MongoClient = require('mongodb').MongoClient;
 const assert = require('assert');
 
 const url = 'mongodb://localhost:27017';
@@ -28,44 +28,44 @@ const dbName = 'conFusion';
 const connect = mongoose.connect(url+'/'+dbName);
 
 connect.then((db)=>{
-  console.log("Connected to db using mongoose");
+  console.log("Connected to db using mongoose"); 
+}, (err) => {console.log(err)});
 
-  Dishes.create({
-    name: "Chocoblast",
-    description: "Trial desc"
-  })
-  .then((dish)=>{
-    console.log("added the "+dish);
+  // Dishes.create({
+  //   name: "Chocoblast",
+  //   description: "Trial desc"
+  // })
+  // .then((dish)=>{
+  //   console.log("added the "+dish);
 
-    return Dishes.findByIdAndUpdate(dish._id, {
-      $set : {
-        description : "updated desc"
-      }
-    }, {
-      new : true
-    }).exec();
-  })
-  .then((dish)=>{
-    console.log("Retrieved the modified dish - ",dish);
-    dish.comments.push({
-      rating: 5,
-      comment: "Delicious!",
-      author: "Jimmy John"
-    });
+  //   return Dishes.findByIdAndUpdate(dish._id, {
+  //     $set : {
+  //       description : "updated desc"
+  //     }
+  //   }, {
+  //     new : true
+  //   }).exec();
+  // })
+  // .then((dish)=>{
+  //   console.log("Retrieved the modified dish - ",dish);
+  //   dish.comments.push({
+  //     rating: 5,
+  //     comment: "Delicious!",
+  //     author: "Jimmy John"
+  //   });
 
-    return dish.save();
-  })
-  .then((dish)=>{
-    console.log("now the dish with comments - ", dish);
-    return Dishes.remove({});
-  })
-  .then(()=>{
-    return mongoose.connection.close();
-  })
-  .catch((err)=>{
-    console.log(err);
-  })
-})
+  //   return dish.save();
+  // })
+  // .then((dish)=>{
+  //   console.log("now the dish with comments - ", dish);
+  //   return Dishes.remove({});
+  // })
+  // .then(()=>{
+  //   return mongoose.connection.close();
+  // })
+  // .catch((err)=>{
+  //   console.log(err);
+  // })
 
 //Connection using just MongoDB module... 
 
