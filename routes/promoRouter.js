@@ -1,47 +1,84 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const mongoose = require('mongoose');
+
+const Promotions = require('../models/promotions');
 
 const promoRouter = express.Router();
 
 promoRouter.use(bodyParser.json());
 
-
 promoRouter.route('/').
-all((req,res,next)=>{
-    res.statusCode = 200;
-    res.setHeader('Content-Type','text/plain');
-    next();
+get( (req, res, next)=>{ //getting or reading from database
+    Promotions.find({})
+    .then((promotions) => {
+        res.statusCode = 200;
+        res.setHeader('Content-Type','application/json');
+        res.json(promotions);
+    }, (err)=>{next(err)})
+    .catch((err)=>{next(err)});
 }).
-get( (req, res, next)=>{ 
-    res.end("We are sending promotions!");
-}).
-post((req,res,next)=>{ 
-    res.end(`Will add the promotion ${req.body.name}`)
+post((req,res,next)=>{ //posting new item to collection
+    Promotions.create(req.body)
+    .then((promotion)=>{
+        console.log("Post of Promotion ",promotion);
+        res.statusCode = 200;
+        res.setHeader('Content-Type','application/json');
+        res.json(promotion);
+    }, (err)=>{next(err)})
+    .catch((err)=>{next(err)});
 }).
 put((req,res,next)=>{
-    res.statusCode = 403; 
+    res.statusCode = 403; //no updating on a whole collection, not supported
     res.end("Put operation not supported")
 }).
-delete((req,res,next)=>{
-    res.end("Deleting all promotions")
+delete((req,res,next)=>{ //dangerous op
+    Promotions.remove({})
+    .then((resp)=>{
+        res.statusCode = 200;
+        res.setHeader('Content-Type','application/json');
+        res.json(resp); 
+    }, (err)=>{next(err)})
+    .catch((err)=>{next(err)});
 });
 
-//FOR SINGLE REQUESTS:
+//for :id
 
 promoRouter.route('/:promotionId').
 get((req, res, next)=>{
-    res.end("We are sending promotion: "+req.params.promotionId);
+    Promotions.findById(req.params.promotionId)
+    .then((promotion) => {
+        res.statusCode = 200;
+        res.setHeader('Content-Type','application/json');
+        res.json(promotion);
+    }, (err)=>{next(err)})
+    .catch((err)=>{next(err)});
 }).
 post((req,res,next)=>{
     res.statusCode = 403;
-    res.end("Post operation on single item not supported - "+req.params.promotionId)
+    res.end("Post operation on single item not supported - "+req.params.promotionId);
 }).
 put((req,res,next)=>{
-    res.write("Updating promotion "+req.params.promotionId)
-    res.end("Will update the promotion - "+req.body.name+" with details: "+req.body.description)
+    Promotions.findByIdAndUpdate(req.params.promotionId, {
+        $set: req.body
+    }, {new: true})
+    .then((promotion)=>{
+        console.log("Post of Promo ",promotion);
+        res.statusCode = 200;
+        res.setHeader('Content-Type','application/json');
+        res.json(promotion);
+    }, (err)=>{next(err)})
+    .catch((err)=>{next(err)});
 }).
 delete((req,res,next)=>{
-    res.end("Deleting single promotion - "+req.params.promotionId);
+    Promotions.findByIdAndRemove(req.params.promotionId)
+    .then((promotion)=>{
+        console.log("Delete of Promo ",promotion);
+        res.statusCode = 200;
+        res.setHeader('Content-Type','application/json');
+        res.json(promotion);
+    }, (err)=>{next(err)})
+    .catch((err)=>{next(err)});
 })
 
 module.exports = promoRouter;

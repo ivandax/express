@@ -1,47 +1,84 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const mongoose = require('mongoose');
+
+const Leaders = require('../models/leaders');
 
 const leaderRouter = express.Router();
 
 leaderRouter.use(bodyParser.json());
 
-
 leaderRouter.route('/').
-all((req,res,next)=>{
-    res.statusCode = 200;
-    res.setHeader('Content-Type','text/plain');
-    next();
+get( (req, res, next)=>{ //getting or reading from database
+    Leaders.find({})
+    .then((leaders) => {
+        res.statusCode = 200;
+        res.setHeader('Content-Type','application/json');
+        res.json(leaders);
+    }, (err)=>{next(err)})
+    .catch((err)=>{next(err)});
 }).
-get( (req, res, next)=>{ 
-    res.end("We are sending leaders!");
-}).
-post((req,res,next)=>{ 
-    res.end(`Will add the leader ${req.body.name}`)
+post((req,res,next)=>{ //posting new item to collection
+    Leaders.create(req.body)
+    .then((leader)=>{
+        console.log("Post of leader ",leader);
+        res.statusCode = 200;
+        res.setHeader('Content-Type','application/json');
+        res.json(leader);
+    }, (err)=>{next(err)})
+    .catch((err)=>{next(err)});
 }).
 put((req,res,next)=>{
-    res.statusCode = 403; 
+    res.statusCode = 403; //no updating on a whole collection, not supported
     res.end("Put operation not supported")
 }).
-delete((req,res,next)=>{
-    res.end("Deleting all leaders")
+delete((req,res,next)=>{ //dangerous op
+    Leaders.remove({})
+    .then((resp)=>{
+        res.statusCode = 200;
+        res.setHeader('Content-Type','application/json');
+        res.json(resp); 
+    }, (err)=>{next(err)})
+    .catch((err)=>{next(err)});
 });
 
-//FOR SINGLE REQUESTS:
+//for :id
 
 leaderRouter.route('/:leaderId').
 get((req, res, next)=>{
-    res.end("We are sending leader: "+req.params.leaderId);
+    Leaders.findById(req.params.leaderId)
+    .then((leader) => {
+        res.statusCode = 200;
+        res.setHeader('Content-Type','application/json');
+        res.json(leader);
+    }, (err)=>{next(err)})
+    .catch((err)=>{next(err)});
 }).
 post((req,res,next)=>{
     res.statusCode = 403;
-    res.end("Post operation on single item not supported - "+req.params.leaderId)
+    res.end("Post operation on single item not supported - "+req.params.leaderId);
 }).
 put((req,res,next)=>{
-    res.write("Updating leader "+req.params.leaderId)
-    res.end("Will update the leader - "+req.body.name+" with details: "+req.body.description)
+    Leaders.findByIdAndUpdate(req.params.leaderId, {
+        $set: req.body
+    }, {new: true})
+    .then((leader)=>{
+        console.log("Post of Promo ",leader);
+        res.statusCode = 200;
+        res.setHeader('Content-Type','application/json');
+        res.json(leader);
+    }, (err)=>{next(err)})
+    .catch((err)=>{next(err)});
 }).
 delete((req,res,next)=>{
-    res.end("Deleting single leader - "+req.params.leaderId);
+    Leaders.findByIdAndRemove(req.params.leaderId)
+    .then((leader)=>{
+        console.log("Delete of Promo ",leader);
+        res.statusCode = 200;
+        res.setHeader('Content-Type','application/json');
+        res.json(leader);
+    }, (err)=>{next(err)})
+    .catch((err)=>{next(err)});
 })
 
 module.exports = leaderRouter;
