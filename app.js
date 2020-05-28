@@ -11,9 +11,6 @@ var leaderRouter = require('./routes/leaderRouter');
 var promoRouter = require('./routes/promoRouter');
 
 const mongoose = require('mongoose');
-//const Dishes = require('./models/dishes');
-
-//const dbOps = require('./operations'); only useful when using mongoDB module without mongoose.
 
 var app = express();
 
@@ -31,74 +28,6 @@ connect.then((db)=>{
   console.log("Connected to db using mongoose"); 
 }, (err) => {console.log(err)});
 
-  // Dishes.create({
-  //   name: "Chocoblast",
-  //   description: "Trial desc"
-  // })
-  // .then((dish)=>{
-  //   console.log("added the "+dish);
-
-  //   return Dishes.findByIdAndUpdate(dish._id, {
-  //     $set : {
-  //       description : "updated desc"
-  //     }
-  //   }, {
-  //     new : true
-  //   }).exec();
-  // })
-  // .then((dish)=>{
-  //   console.log("Retrieved the modified dish - ",dish);
-  //   dish.comments.push({
-  //     rating: 5,
-  //     comment: "Delicious!",
-  //     author: "Jimmy John"
-  //   });
-
-  //   return dish.save();
-  // })
-  // .then((dish)=>{
-  //   console.log("now the dish with comments - ", dish);
-  //   return Dishes.remove({});
-  // })
-  // .then(()=>{
-  //   return mongoose.connection.close();
-  // })
-  // .catch((err)=>{
-  //   console.log(err);
-  // })
-
-//Connection using just MongoDB module... 
-
-// MongoClient.connect(url).then((client) => {
-//   //assert.equal(err, null); //checks if there is an error and informs, it's like an if.
-//   console.log("Connected to Mongo server");
-
-//   const db = client.db(dbName);
-
-//   dbOps.insertDocument(db, {name: "Doughnut", description: "Dessert"}, 'dishes')
-//   .then((result)=>{
-//     console.log("On app.js, insert document:\n", result.ops);
-//     return dbOps.findDocuments(db, 'dishes');
-//   })
-//   .then((docs)=>{
-//     console.log("On app.js, find docs:\n", docs);
-//     return dbOps.updateDocument(db, {name:"Doughnut"}, {description: "new desc"}, 'dishes')
-//   })
-//   .then((result)=>{
-//     console.log("On app.js, updated document", result.result);
-//     return dbOps.findDocuments(db, 'dishes');
-//   })
-//   .then((docs)=>{
-//     console.log("On app.js, secdon  found docs:\n", docs);
-//     return db.dropCollection('dishes')
-//   })
-//   .then((result)=>{
-//     console.log("Dropped collection", result);
-//     client.close();
-//   }).catch((err)=>{console.log(err)});
-// })
-// .catch((err)=>{console.log(err)});
-
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
@@ -106,33 +35,46 @@ app.set('view engine', 'jade');
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
+app.use(cookieParser('1234004321'));
 
 //authentication
 const auth = (req, res, next) => {
   console.log(req.headers);
+  console.log(req.signedCookies);
 
-  var authHeader = req.headers.authorization;
-  if(!authHeader){
-    var err = new Error("You are not authenticated.");
-    res.setHeader('WWW-Authenticate', 'Basic');
-    err.status = 401;
-    next(err);
-
-  }
-
-  var auth = new Buffer(authHeader.split(' ')[1], 'base64').toString().split(":");
-  var username = auth[0]
-  var password = auth[1]
-  console.log("username and passord", username, password);
-
-  if(username === 'admin' && password === 'password'){
-    next();
+  //if user is not authenticated yet---
+  if(!req.signedCookies.user){
+    var authHeader = req.headers.authorization;
+    if(!authHeader){
+      var err = new Error("You are not authenticated.");
+      res.setHeader('WWW-Authenticate', 'Basic');
+      err.status = 401;
+      next(err);
+    }
+  
+    var auth = new Buffer.from(authHeader.split(' ')[1], 'base64').toString().split(":");
+    var username = auth[0]
+    var password = auth[1]
+    console.log("username and passord", username, password);
+  
+    if(username === 'admin' && password === 'password'){
+      res.cookie('user', 'admin', {signed: true})
+      next();
+    } else{
+      var err = new Error("You are not authenticated.");
+      res.setHeader('WWW-Authenticate', 'Basic');
+      err.status = 401;
+      next(err);  
+    }
   } else{
-    var err = new Error("You are not authenticated.");
-    res.setHeader('WWW-Authenticate', 'Basic');
-    err.status = 401;
-    next(err);  
+    if(req.signedCookies.user === 'admin'){
+      next()
+    } else{
+      var err = new Error("You are not authenticated.");
+      //res.setHeader('WWW-Authenticate', 'Basic'); no prompt here.
+      err.status = 401;
+      next(err);  
+    }
   }
 }
 
