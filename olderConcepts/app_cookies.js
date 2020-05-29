@@ -1,10 +1,8 @@
 var createError = require('http-errors');
 var express = require('express');
 var path = require('path');
-//var cookieParser = require('cookie-parser'); if we use sessions, we need no cookies for auth
+var cookieParser = require('cookie-parser');
 var logger = require('morgan');
-var session = require('express-session');
-var FileStore = require('session-file-store')(session);
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
@@ -37,23 +35,15 @@ app.set('view engine', 'jade');
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-//app.use(cookieParser('1234004321'));
-
-app.use(session({
-  name: 'session-id',
-  secret: '1234004321',
-  saveUninitialized : false,
-  resave : false,
-  store: new FileStore()
-}))
+app.use(cookieParser('1234004321'));
 
 //authentication
 const auth = (req, res, next) => {
   console.log(req.headers);
-  console.log("Logging session: ",req.session);
+  console.log(req.signedCookies);
 
   //if user is not authenticated yet---
-  if(!req.session.user){
+  if(!req.signedCookies.user){
     var authHeader = req.headers.authorization;
     if(!authHeader){
       var err = new Error("You are not authenticated.");
@@ -68,7 +58,7 @@ const auth = (req, res, next) => {
     console.log("username and passord", username, password);
   
     if(username === 'admin' && password === 'password'){
-      req.session.user = 'admin';
+      res.cookie('user', 'admin', {signed: true})
       next();
     } else{
       var err = new Error("You are not authenticated.");
@@ -77,7 +67,7 @@ const auth = (req, res, next) => {
       next(err);  
     }
   } else{
-    if(req.session.user === 'admin'){
+    if(req.signedCookies.user === 'admin'){
       next()
     } else{ //this is unlikely to occur, but for the sake of completeness
       var err = new Error("You are not authenticated.");

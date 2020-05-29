@@ -55,3 +55,12 @@ const dbname = 'nameOfyourDB';
 MongoClient.connect(url, (err, client) => {
  ...
 }
+
+# To create data schemas and also handle connections, we use Mongoose too
+
+* npm install mongoose --save
+
+# To handle authentication, we can use Express Sessions
+
+* npm install express-session --save
+* npm install session-file-store --save
