@@ -7,7 +7,7 @@ var session = require('express-session');
 var FileStore = require('session-file-store')(session);
 
 var indexRouter = require('./routes/index');
-var usersRouter = require('./routes/users');
+var usersRouter = require('./routes/usersRouter');
 var dishRouter = require('./routes/dishRouter');
 var leaderRouter = require('./routes/leaderRouter');
 var promoRouter = require('./routes/promoRouter');
@@ -47,42 +47,26 @@ app.use(session({
   store: new FileStore()
 }))
 
+app.use('/', indexRouter);
+app.use('/users', usersRouter);
+
 //authentication
 const auth = (req, res, next) => {
-  console.log(req.headers);
+  console.log("logging headers",req.headers);
   console.log("Logging session: ",req.session);
 
   //if user is not authenticated yet---
   if(!req.session.user){
-    var authHeader = req.headers.authorization;
-    if(!authHeader){
-      var err = new Error("You are not authenticated.");
-      res.setHeader('WWW-Authenticate', 'Basic');
-      err.status = 401;
-      next(err);
-    }
-  
-    var auth = new Buffer.from(authHeader.split(' ')[1], 'base64').toString().split(":");
-    var username = auth[0]
-    var password = auth[1]
-    console.log("username and passord", username, password);
-  
-    if(username === 'admin' && password === 'password'){
-      req.session.user = 'admin';
-      next();
-    } else{
-      var err = new Error("You are not authenticated.");
-      res.setHeader('WWW-Authenticate', 'Basic');
-      err.status = 401;
-      next(err);  
-    }
-  } else{
-    if(req.session.user === 'admin'){
+    var err = new Error("You are not authenticated.");
+    err.status = 401;
+    next(err);
+  }
+   else{
+    if(req.session.user === 'authenticated'){
       next()
     } else{ //this is unlikely to occur, but for the sake of completeness
       var err = new Error("You are not authenticated.");
-      //res.setHeader('WWW-Authenticate', 'Basic'); no prompt here.
-      err.status = 401;
+      err.status = 403;
       next(err);  
     }
   }
@@ -92,8 +76,6 @@ app.use(auth);
 //this following statement allows the server to serve static files, auth would go before
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/', indexRouter);
-app.use('/users', usersRouter);
 app.use('/dishes', dishRouter);
 app.use('/leaders', leaderRouter);
 app.use('/promotions', promoRouter);
