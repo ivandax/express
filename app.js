@@ -7,6 +7,7 @@ var session = require('express-session');
 var FileStore = require('session-file-store')(session);
 var passport = require('passport');
 var authenticate = require('./authenticate');
+var config = require('./config');
 
 
 var indexRouter = require('./routes/index');
@@ -22,12 +23,12 @@ var app = express();
 //const MongoClient = require('mongodb').MongoClient;
 const assert = require('assert');
 
-const url = 'mongodb://localhost:27017';
-const dbName = 'conFusion';
+const url = config.mongoUrl;
+//const dbName = 'conFusion';
 
 //connection using mongoose...
 
-const connect = mongoose.connect(url+'/'+dbName);
+const connect = mongoose.connect(url);
 
 connect.then((db)=>{
   console.log("Connected to db using mongoose"); 
@@ -42,37 +43,38 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 //app.use(cookieParser('1234004321'));
 
-app.use(session({
-  name: 'session-id',
-  secret: '1234004321',
-  saveUninitialized : false,
-  resave : false,
-  store: new FileStore()
-}))
+// app.use(session({
+//   name: 'session-id',
+//   secret: '1234004321',
+//   saveUninitialized : false,
+//   resave : false,
+//   store: new FileStore()
+// }))
 
 app.use(passport.initialize());
-app.use(passport.session());
+// app.use(passport.session());
 
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 
 //authentication
-const auth = (req, res, next) => {
-  console.log("logging headers",req.headers);
-  console.log("Logging session: ",req.session);
+// const auth = (req, res, next) => {
+//   console.log("logging headers",req.headers);
+//   console.log("Logging session: ",req.session);
 
-  //if user is not authenticated yet---
-  if(!req.user){
-    var err = new Error("You are not authenticated.");
-    err.status = 401;
-    next(err);
-  }
-   else{
-     next();
-   }
-}
+//   //if user is not authenticated yet---
+//   if(!req.user){
+//     var err = new Error("You are not authenticated.");
+//     err.status = 401;
+//     next(err);
+//   }
+//    else{
+//      next();
+//    }
+// }
 
-app.use(auth);
+// app.use(auth);
+
 //this following statement allows the server to serve static files, auth would go before
 app.use(express.static(path.join(__dirname, 'public')));
 

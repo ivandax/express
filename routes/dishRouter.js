@@ -1,6 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
+const authenticate = require('../authenticate');
 
 const Dishes = require('../models/dishes');
 
@@ -10,11 +11,6 @@ dishRouter.use(bodyParser.json());
 
 //all specifies something we want the app to do to all different methods, regardless of methods
 dishRouter.route('/').
-// all((req,res,next)=>{
-//     res.statusCode = 200;
-//     res.setHeader('Content-Type','text/plain');
-//     next(); //next allows us to move along to other posible requests
-// }).
 get( (req, res, next)=>{ //getting or reading from database
     Dishes.find({})
     .then((dishes) => {
@@ -24,7 +20,7 @@ get( (req, res, next)=>{ //getting or reading from database
     }, (err)=>{next(err)})
     .catch((err)=>{next(err)});
 }).
-post((req,res,next)=>{ //posting new item to collection
+post(authenticate.verifyUser, (req,res,next)=>{ //posting new item to collection
     Dishes.create(req.body)
     .then((dish)=>{
         console.log("Post of Dish ",dish);
@@ -34,11 +30,11 @@ post((req,res,next)=>{ //posting new item to collection
     }, (err)=>{next(err)})
     .catch((err)=>{next(err)});
 }).
-put((req,res,next)=>{
+put(authenticate.verifyUser, (req,res,next)=>{
     res.statusCode = 403; //no updating on a whole collection, not supported
     res.end("Put operation not supported")
 }).
-delete((req,res,next)=>{ //dangerous op
+delete(authenticate.verifyUser, (req,res,next)=>{ //dangerous op
     Dishes.remove({})
     .then((resp)=>{
         res.statusCode = 200;
@@ -60,11 +56,11 @@ get((req, res, next)=>{
     }, (err)=>{next(err)})
     .catch((err)=>{next(err)});
 }).
-post((req,res,next)=>{
+post(authenticate.verifyUser, (req,res,next)=>{
     res.statusCode = 403;
     res.end("Post operation on single item not supported - "+req.params.dishId)
 }).
-put((req,res,next)=>{
+put(authenticate.verifyUser, (req,res,next)=>{
     Dishes.findByIdAndUpdate(req.params.dishId, {
         $set: req.body
     }, {new: true})
@@ -76,7 +72,7 @@ put((req,res,next)=>{
     }, (err)=>{next(err)})
     .catch((err)=>{next(err)});
 }).
-delete((req,res,next)=>{
+delete(authenticate.verifyUser, (req,res,next)=>{
     Dishes.findByIdAndRemove(req.params.dishId)
     .then((dish)=>{
         console.log("Post of Dish ",dish);
@@ -105,7 +101,7 @@ get( (req, res, next)=>{ //getting or reading from database
     }, (err)=>{next(err)})
     .catch((err)=>{next(err)});
 }).
-post((req,res,next)=>{ //posting new item to collection
+post(authenticate.verifyUser, (req,res,next)=>{ //posting new item to collection
     Dishes.findById(req.params.dishId)
     .then((dish)=>{
         if(dish != null){
@@ -124,11 +120,11 @@ post((req,res,next)=>{ //posting new item to collection
     }, (err)=>{next(err)})
     .catch((err)=>{next(err)});
 }).
-put((req,res,next)=>{
+put(authenticate.verifyUser, (req,res,next)=>{
     res.statusCode = 403; //no updating on a whole collection, not supported
     res.end("Put operation not supported on dishes / comments")
 }).
-delete((req,res,next)=>{ //dangerous op
+delete(authenticate.verifyUser, (req,res,next)=>{ //dangerous op
     Dishes.findById(req.params.dishId)
     .then((dish)=>{
         if(dish != null){
@@ -172,11 +168,11 @@ get((req, res, next)=>{
     }, (err)=>{next(err)})
     .catch((err)=>{next(err)});
 }).
-post((req,res,next)=>{
+post(authenticate.verifyUser, (req,res,next)=>{
     res.statusCode = 403;
     res.end("Post operation on single item not supported - "+req.params.dishId+" or for comments")
 }).
-put((req,res,next)=>{
+put(authenticate.verifyUser, (req,res,next)=>{
     Dishes.findById(req.params.dishId)
     .then((dish) => {
         if(dish != null && dish.comments.id(req.params.commentId)!=null){
@@ -204,7 +200,7 @@ put((req,res,next)=>{
     }, (err)=>{next(err)})
     .catch((err)=>{next(err)});
 }).
-delete((req,res,next)=>{
+delete(authenticate.verifyUser, (req,res,next)=>{
     Dishes.findById(req.params.dishId)
     .then((dish)=>{
         if(dish != null && dish.comments.id(req.params.commentId)!=null){
