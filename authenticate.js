@@ -38,3 +38,13 @@ exports.jwtPassport = passport.use(new JwtStrategy(opts, (jwt_payload, done)=>{
 }));
 
 exports.verifyUser = passport.authenticate('jwt', {session: false})
+
+exports.verifyAdmin = (req, res, next) => {
+    if(!req.user.admin){
+        const err = new Error("Forbidden operation. Only Admins")
+        return next(err);
+    }
+    else{
+        return next();
+    }
+}

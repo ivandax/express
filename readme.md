@@ -64,3 +64,7 @@ MongoClient.connect(url, (err, client) => {
 
 * npm install express-session --save
 * npm install session-file-store --save
+
+# Modifiying the admin should only be done directly by the database user... not for normal logins
+
+db.users.update({"username":"admin"}, {$set:{"admin": true}})

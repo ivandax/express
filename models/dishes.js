@@ -58,7 +58,6 @@ var trial3 = {
 var simpleComment = {
     "rating" : 5,
     "comment" : "Delicious",
-    "author" : "John Wick"
 }
 
 const dishSchema = new Schema({

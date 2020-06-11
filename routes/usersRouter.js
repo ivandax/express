@@ -8,8 +8,15 @@ var router = express.Router();
 router.use(bodyParser.json());
 
 /* GET users listing. */
-router.get('/', function(req, res, next) {
-  res.send('respond with a resource');
+router.get('/', authenticate.verifyUser, authenticate.verifyAdmin, function(req, res, next) {
+  // res.send('respond with a resource');
+  User.find({})
+  .then((users) => {
+      res.statusCode = 200;
+      res.setHeader('Content-Type','application/json');
+      res.json(users);
+  }, (err)=>{next(err)})
+  .catch((err)=>{next(err)});
 });
 
 router.post('/signup', function(req,res,next){
@@ -51,16 +58,16 @@ router.post('/login', passport.authenticate('local'), (req,res,next)=>{
   res.json({success: true, token: token, status: "You have logged in!"})  
 })
 
-router.get('/logout', (req,res)=>{
-  if(req.session){
-    req.session.destroy();
-    res.clearCookie('session-id');
-    res.redirect('/');
-  } else{
-    var err = new Error("You're not logged in.");
-    err.status = 403;
-    next(err);
-  }
-})
+// router.get('/logout', (req,res,next)=>{
+//   if(req.session){
+//     req.session.destroy();
+//     res.clearCookie('session-id');
+//     res.redirect('/');
+//   } else{
+//     var err = new Error("You're not logged in.");
+//     err.status = 403;
+//     next(err);
+//   }
+// })
 
 module.exports = router;

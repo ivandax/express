@@ -19,7 +19,7 @@ get( (req, res, next)=>{ //getting or reading from database
     }, (err)=>{next(err)})
     .catch((err)=>{next(err)});
 }).
-post(authenticate.verifyUser, (req,res,next)=>{ //posting new item to collection
+post(authenticate.verifyUser,authenticate.verifyAdmin, (req,res,next)=>{ //posting new item to collection
     Promotions.create(req.body)
     .then((promotion)=>{
         console.log("Post of Promotion ",promotion);
@@ -29,11 +29,11 @@ post(authenticate.verifyUser, (req,res,next)=>{ //posting new item to collection
     }, (err)=>{next(err)})
     .catch((err)=>{next(err)});
 }).
-put(authenticate.verifyUser, (req,res,next)=>{
+put(authenticate.verifyUser,authenticate.verifyAdmin, (req,res,next)=>{
     res.statusCode = 403; //no updating on a whole collection, not supported
     res.end("Put operation not supported")
 }).
-delete(authenticate.verifyUser, (req,res,next)=>{ //dangerous op
+delete(authenticate.verifyUser,authenticate.verifyAdmin, (req,res,next)=>{ //dangerous op
     Promotions.remove({})
     .then((resp)=>{
         res.statusCode = 200;
@@ -55,11 +55,11 @@ get((req, res, next)=>{
     }, (err)=>{next(err)})
     .catch((err)=>{next(err)});
 }).
-post(authenticate.verifyUser, (req,res,next)=>{
+post(authenticate.verifyUser, authenticate.verifyAdmin,(req,res,next)=>{
     res.statusCode = 403;
     res.end("Post operation on single item not supported - "+req.params.promotionId);
 }).
-put(authenticate.verifyUser, (req,res,next)=>{
+put(authenticate.verifyUser,authenticate.verifyAdmin, (req,res,next)=>{
     Promotions.findByIdAndUpdate(req.params.promotionId, {
         $set: req.body
     }, {new: true})
@@ -71,7 +71,7 @@ put(authenticate.verifyUser, (req,res,next)=>{
     }, (err)=>{next(err)})
     .catch((err)=>{next(err)});
 }).
-delete(authenticate.verifyUser, (req,res,next)=>{
+delete(authenticate.verifyUser,authenticate.verifyAdmin, (req,res,next)=>{
     Promotions.findByIdAndRemove(req.params.promotionId)
     .then((promotion)=>{
         console.log("Delete of Promo ",promotion);
